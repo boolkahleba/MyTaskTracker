@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Группы{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="page-title mb-0">Группы пользователей</h2>
+    {% if request.user.is_staff %}
+        <a href="{% url 'accounts:create_group' %}" class="btn btn-outline-orange">Создать группу</a>
+    {% endif %}
+</div>
+
+<div class="row g-3">
+    {% for group in groups %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card-dark p-3 rounded-3 h-100">
+            <h5>{{ group.name }}</h5>
+            <div class="text-muted mb-2">Создал: {{ group.created_by.full_name }}</div>
+            <div class="small text-muted mb-3">Дата: {{ group.created_at }}</div>
+            <a href="{% url 'accounts:group_detail' group.id %}" class="btn btn-outline-orange btn-sm">Открыть</a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="section-box">Группы пока не созданы.</div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

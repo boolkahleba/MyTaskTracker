@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Профиль{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="section-box">
+            <h2 class="page-title mb-4">Профиль</h2>
+
+            <div class="mb-3">
+                <div class="text-muted">Имя</div>
+                <div class="fs-5">{{ profile_user.full_name }}</div>
+            </div>
+
+            <div class="mb-3">
+                <div class="text-muted">Email</div>
+                <div class="fs-5">{{ profile_user.email }}</div>
+            </div>
+
+            <div class="mb-3">
+                <div class="text-muted">Дата регистрации</div>
+                <div>{{ profile_user.registered_at }}</div>
+            </div>
+
+            <div class="mb-3">
+                <div class="text-muted">Роль</div>
+                <div>
+                    {% if profile_user.is_staff %}
+                        Менеджер
+                    {% else %}
+                        Пользователь
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
