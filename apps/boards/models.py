@@ -21,6 +21,23 @@ class Board(models.Model):
         db_table = 'Board'
 
 
+class BoardStatus(models.Model):
+    id = models.AutoField(primary_key=True)
+    board = models.ForeignKey(Board, on_delete=models.CASCADE, related_name='statuses', verbose_name='Доска')
+    name = models.CharField(max_length=100, verbose_name='Название статуса')
+    position = models.PositiveIntegerField(default=0, verbose_name='Позиция')
+
+    def __str__(self):
+        return f'{self.board.name} - {self.name}'
+
+    class Meta:
+        verbose_name = 'Статус доски'
+        verbose_name_plural = 'Статусы доски'
+        db_table = 'Board_status'
+        ordering = ['position']
+        unique_together = [['board', 'name']]
+
+
 class BoardMember(models.Model):
     ACCESS_CHOICES = [
         ('read', 'Чтение'),
