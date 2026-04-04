@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Создание доски{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-xl-8">
+        <div class="section-box">
+            <h2 class="page-title mb-4">Создание доски</h2>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label">Название доски</label>
+                    {{ form.name }}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Описание</label>
+                    {{ form.description }}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Колонки</label>
+                    {{ form.statuses }}
+                    {% if form.statuses.help_text %}
+                        <div class="form-text">{{ form.statuses.help_text }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Пользователи с доступом</label>
+                    {{ form.users }}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Группы с доступом</label>
+                    {{ form.groups }}
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-outline-orange">Создать</button>
+                    <a href="{% url 'boards:board_list' %}" class="btn btn-secondary">Отмена</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
