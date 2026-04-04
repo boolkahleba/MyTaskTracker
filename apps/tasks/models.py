@@ -1,28 +1,27 @@
 from django.db import models
 from django.conf import settings
-from boards.models import Board
-
-
-class Status(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=100, unique=True, verbose_name='Название статуса')
-    description = models.TextField(blank=True, null=True, verbose_name='Описание')
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = 'Статус'
-        verbose_name_plural = 'Статусы'
-        db_table = 'Status'
+from boards.models import Board, BoardStatus
 
 
 class Task(models.Model):
+    TASK_TYPE_CHOICES = [
+        ('bug', 'Bug'),
+        ('feature', 'Feature'),
+        ('task', 'Task'),
+        ('research', 'Research'),
+    ]
+
+    PRIORITY_CHOICES = [
+        ('low', 'Низкий'),
+        ('medium', 'Средний'),
+        ('high', 'Высокий'),
+    ]
+
     id = models.AutoField(primary_key=True)
     title = models.CharField(max_length=200, verbose_name='Название')
     description = models.TextField(verbose_name='Описание')
     board = models.ForeignKey(Board, on_delete=models.CASCADE, related_name='tasks', verbose_name='Доска')
-    status = models.ForeignKey(Status, on_delete=models.SET_NULL, null=True, related_name='tasks',
+    status = models.ForeignKey(BoardStatus, on_delete=models.SET_NULL, null=True, related_name='tasks',
                                verbose_name='Статус')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
@@ -32,7 +31,12 @@ class Task(models.Model):
                                  related_name='assigned_tasks', verbose_name='Исполнитель')
     started_at = models.DateTimeField(null=True, blank=True, verbose_name='Время начала')
     due_date = models.DateField(null=True, blank=True, verbose_name='Срок выполнения')
-    time_estimate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name='Оценка времени')
+    time_estimate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True,
+                                        verbose_name='Оценка времени')
+    task_type = models.CharField(max_length=30, choices=TASK_TYPE_CHOICES, default='task', verbose_name='Тип задачи')
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='medium', verbose_name='Приоритет')
+    actual_time_spent = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True,
+                                            verbose_name='Фактическое время, ч')
 
     def __str__(self):
         return self.title
