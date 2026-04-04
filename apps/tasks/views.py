@@ -187,3 +187,11 @@ def board_task_search_view(request, board_id):
         'tasks': tasks,
         'form': form,
     })
+
+
+@login_required
+def my_tasks_view(request):
+    tasks = Task.objects.filter(assignee=request.user).select_related('board', 'status').order_by('-created_at')
+    return render(request, 'tasks/my_tasks.html', {
+        'tasks': tasks,
+    })
