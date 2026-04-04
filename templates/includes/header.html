@@ -1,0 +1,41 @@
+<nav class="navbar navbar-expand-lg navbar-dark-custom mb-4">
+    <div class="container">
+        <a class="navbar-brand fw-semibold" href="{% url 'boards:board_list' %}">Task Tracker</a>
+
+        {% if request.user.is_authenticated %}
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="mainNavbar">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link text-light" href="{% url 'boards:board_list' %}">Доски</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link text-light" href="{% url 'tasks:my_tasks' %}">Мои задачи</a>
+                </li>
+
+                {% if request.user.is_staff %}
+                <li class="nav-item">
+                    <a class="nav-link text-light" href="{% url 'accounts:group_list' %}">Группы</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-light" href="{% url 'accounts:user_list' %}">Пользователи</a>
+                </li>
+                {% endif %}
+            </ul>
+
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link text-light" href="{% url 'accounts:profile' %}">Профиль</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-light" href="{% url 'accounts:logout' %}">Выйти</a>
+                </li>
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</nav>
