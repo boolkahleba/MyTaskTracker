@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Удаление доступа{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="section-box">
+            <h2 class="page-title mb-3">Удаление пользователя</h2>
+            <p>Удалить пользователя <strong>{{ member.user.full_name }}</strong> из участников доски <strong>{{ member.board.name }}</strong>?</p>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-outline-danger">Удалить</button>
+                    <a href="{% url 'boards:board_access' member.board.id %}" class="btn btn-secondary">Отмена</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

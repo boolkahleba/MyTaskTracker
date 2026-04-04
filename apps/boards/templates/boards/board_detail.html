@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}{{ board.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+        <h2 class="page-title mb-1">{{ board.name }}</h2>
+        <div class="text-muted">{{ board.description|default:"Без описания" }}</div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'tasks:create_task' board.id %}" class="btn btn-outline-orange">Создать задачу</a>
+        <a href="{% url 'tasks:task_search' board.id %}" class="btn btn-outline-light">Поиск и фильтры</a>
+
+        {% if request.user.is_staff %}
+            <a href="{% url 'stats:board_stats' board.id %}" class="btn btn-outline-light">Статистика</a>
+            <a href="{% url 'boards:update_board' board.id %}" class="btn btn-outline-light">Редактировать</a>
+            <a href="{% url 'boards:board_access' board.id %}" class="btn btn-outline-light">Доступ</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="kanban-wrapper">
+    {% for status, tasks in tasks_by_status.items %}
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <h5 class="mb-0">{{ status.name }}</h5>
+            </div>
+
+            {% for task in tasks %}
+                <div class="task-card">
+                    <h6 class="mb-2">
+                        <a href="{% url 'tasks:task_detail' task.id %}">{{ task.title }}</a>
+                    </h6>
+
+                    <div class="small mb-2">
+                        <div><span class="text-muted">Исполнитель:</span> {{ task.assignee.full_name|default:"Не назначен" }}</div>
+                        <div><span class="text-muted">Приоритет:</span> {{ task.get_priority_display }}</div>
+                        <div><span class="text-muted">Дедлайн:</span> {{ task.due_date|default:"Не указан" }}</div>
+                        <div><span class="text-muted">Прогноз:</span> 2 часа</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'tasks:task_detail' task.id %}" class="btn btn-sm btn-outline-orange">Открыть</a>
+                        <a href="{% url 'tasks:change_task_status' task.id %}" class="btn btn-sm btn-outline-light">Статус</a>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="card-dark p-3 rounded-3">
+                    <span class="text-muted">В этой колонке пока нет задач.</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
