@@ -11,4 +11,5 @@ urlpatterns = [
     path('<int:task_id>/change-status/', views.change_task_status_view, name='change_task_status'),
     path('board/<int:board_id>/search/', views.board_task_search_view, name='task_search'),
     path('my/', views.my_tasks_view, name='my_tasks'),
+    path('<int:task_id>/drag-update-status/', views.drag_update_task_status_view, name='drag_update_task_status'),
 ]

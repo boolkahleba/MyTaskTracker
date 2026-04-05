@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+import json
+from django.http import Http404, JsonResponse
 
 from .forms import TaskForm, TaskUpdateForm, TaskStatusForm, TaskFilterForm, TaskCommentForm
 from .models import Task, Prediction
@@ -194,4 +196,53 @@ def my_tasks_view(request):
     tasks = Task.objects.filter(assignee=request.user).select_related('board', 'status').order_by('-created_at')
     return render(request, 'tasks/my_tasks.html', {
         'tasks': tasks,
+    })
+
+
+@login_required
+def drag_update_task_status_view(request, task_id):
+    task = get_object_or_404(Task, pk=task_id)
+
+    if not user_has_board_access(request.user, task.board):
+        raise Http404
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Неверный метод запроса'}, status=400)
+
+    try:
+        data = json.loads(request.body)
+    except:
+        return JsonResponse({'success': False, 'error': 'Некорректные данные'}, status=400)
+
+    status_id = data.get('status_id')
+    actual_time_spent = data.get('actual_time_spent')
+
+    if not status_id:
+        return JsonResponse({'success': False, 'error': 'Не передан статус'}, status=400)
+
+    new_status = get_object_or_404(BoardStatus, pk=status_id, board=task.board)
+
+    old_status_name = task.status.name.lower() if task.status else ''
+    new_status_name = new_status.name.lower()
+
+    if old_status_name == 'в работе':
+        if actual_time_spent not in [None, '']:
+            try:
+                task.actual_time_spent = Decimal(str(actual_time_spent))
+            except:
+                return JsonResponse({'success': False, 'error': 'Некорректное фактическое время'}, status=400)
+
+    if new_status_name == 'в работе' and task.started_at is None:
+        task.started_at = timezone.now()
+
+    task.status = new_status
+    task.save()
+
+    if new_status_name in ['готово', 'done', 'completed', 'завершено']:
+        save_historical_data(task)
+
+    return JsonResponse({
+        'success': True,
+        'new_status': new_status.name,
+        'task_id': task.id,
     })
