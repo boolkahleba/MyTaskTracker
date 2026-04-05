@@ -1,6 +1,6 @@
 <nav class="navbar navbar-expand-lg navbar-dark-custom mb-4">
     <div class="container">
-        <a class="navbar-brand fw-semibold" href="{% url 'boards:board_list' %}">Task Tracker</a>
+        <a class="navbar-brand fw-semibold" href="{% url 'boards:board_list' %}">Трекер Задач</a>
 
         {% if request.user.is_authenticated %}
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
