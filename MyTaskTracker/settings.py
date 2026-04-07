@@ -127,3 +127,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 AUTH_USER_MODEL = 'accounts.User'
+
+ML_MODELS_DIR = BASE_DIR / 'ml_models'
+CATBOOST_MODEL_PATH = ML_MODELS_DIR / 'task_duration_model.cbm'
+MIN_TASKS_FOR_TRAINING = 10

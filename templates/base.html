@@ -171,14 +171,15 @@
     </style>
     {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
+
     {% include 'includes/header.html' %}
-    <main class="container py-4">
-        {% include 'includes/messages.html' %}
+
+    <main class="flex-grow-1 container mt-4">
         {% block content %}{% endblock %}
     </main>
+
     {% include 'includes/footer.html' %}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    {% block extra_js %}{% endblock %}
+
 </body>
 </html>

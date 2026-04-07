@@ -64,10 +64,12 @@ class TaskComment(models.Model):
 class Prediction(models.Model):
     id = models.AutoField(primary_key=True)
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='predictions', verbose_name='Задача')
-    prediction_time = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Прогноз времени')
+    prediction_time = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name='Прогноз времени')
+    prediction_text = models.CharField(max_length=255, blank=True, null=True, verbose_name='Текст прогноза')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата прогноза')
 
     class Meta:
         verbose_name = 'Прогноз'
         verbose_name_plural = 'Прогнозы'
         db_table = 'Prediction'
+        ordering = ['-created_at']

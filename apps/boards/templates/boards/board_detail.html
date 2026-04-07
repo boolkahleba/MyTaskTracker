@@ -2,248 +2,265 @@
 {% block title %}{{ board.name }}{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-    <div>
-        <h2 class="page-title mb-1">{{ board.name }}</h2>
-        <div class="text-muted">{{ board.description|default:"Без описания" }}</div>
-    </div>
-
-    <div class="d-flex flex-wrap gap-2">
-        <a href="{% url 'tasks:create_task' board.id %}" class="btn btn-outline-orange">Создать задачу</a>
-        <a href="{% url 'tasks:task_search' board.id %}" class="btn btn-outline-light">Поиск и фильтры</a>
-
-        {% if request.user.is_staff %}
-            <a href="{% url 'stats:board_stats' board.id %}" class="btn btn-outline-light">Статистика</a>
-            <a href="{% url 'boards:update_board' board.id %}" class="btn btn-outline-light">Редактировать</a>
-            <a href="{% url 'boards:board_access' board.id %}" class="btn btn-outline-light">Доступ</a>
-        {% endif %}
-    </div>
-</div>
-
-<div class="kanban-wrapper">
-    {% for status, tasks in tasks_by_status.items %}
-        <div class="kanban-column">
-            <div class="kanban-column-header">
-                <h5 class="mb-0">{{ status.name }}</h5>
-            </div>
-
-            <div class="kanban-dropzone"
-                 data-status-id="{{ status.id }}"
-                 data-status-name="{{ status.name }}">
-                {% for task in tasks %}
-                    <div class="task-card"
-                         draggable="true"
-                         data-task-id="{{ task.id }}"
-                         data-current-status-name="{{ task.status.name|default:'' }}">
-                        <h6 class="mb-2">
-                            <a href="{% url 'tasks:task_detail' task.id %}">{{ task.title }}</a>
-                        </h6>
-
-                        <div class="small mb-2">
-                            <div><span class="text-muted">Исполнитель:</span> {{ task.assignee.full_name|default:"Не назначен" }}</div>
-                            <div><span class="text-muted">Приоритет:</span> {{ task.get_priority_display }}</div>
-                            <div><span class="text-muted">Дедлайн:</span> {{ task.due_date|default:"Не указан" }}</div>
-                            <div><span class="text-muted">Прогноз:</span> 2 часа</div>
-                        </div>
-
-                        <div class="d-flex gap-2">
-                            <a href="{% url 'tasks:task_detail' task.id %}" class="btn btn-sm btn-outline-orange">Открыть</a>
-                            <a href="{% url 'tasks:change_task_status' task.id %}" class="btn btn-sm btn-outline-light">Статус</a>
-                        </div>
-                    </div>
-                {% empty %}
-                    <div class="dropzone-empty text-muted small">Перетащите задачу сюда</div>
-                {% endfor %}
-            </div>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h2 class="page-title mb-1">{{ board.name }}</h2>
+            <div class="text-muted">{{ board.description|default:"Без описания" }}</div>
         </div>
-    {% endfor %}
-</div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'tasks:create_task' board.id %}" class="btn btn-outline-orange">Создать задачу</a>
+            <a href="{% url 'tasks:task_search' board.id %}" class="btn btn-outline-light">Поиск и фильтры</a>
+
+            {% if request.user.is_staff %}
+                <a href="{% url 'stats:board_stats' board.id %}" class="btn btn-outline-light">Статистика</a>
+                <a href="{% url 'boards:update_board' board.id %}" class="btn btn-outline-light">Редактировать</a>
+                <a href="{% url 'boards:board_access' board.id %}" class="btn btn-outline-light">Доступ</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="kanban-wrapper">
+        {% for status, tasks in tasks_by_status.items %}
+            <div class="kanban-column">
+                <div class="kanban-column-header">
+                    <h5 class="mb-0">{{ status.name }}</h5>
+                </div>
+
+                <div class="kanban-dropzone"
+                     data-status-id="{{ status.id }}"
+                     data-status-name="{{ status.name }}">
+                    {% for task in tasks %}
+                        <div class="task-card"
+                             draggable="true"
+                             data-task-id="{{ task.id }}"
+                             data-current-status-name="{{ task.status.name|default:'' }}">
+                            <h6 class="mb-2">
+                                <a href="{% url 'tasks:task_detail' task.id %}">{{ task.title }}</a>
+                            </h6>
+
+                            <div class="small mb-2">
+                                <div><span
+                                        class="text-muted">Исполнитель:</span> {{ task.assignee.full_name|default:"Не назначен" }}
+                                </div>
+                                <div><span class="text-muted">Приоритет:</span> {{ task.get_priority_display }}</div>
+                                <div><span class="text-muted">Дедлайн:</span> {{ task.due_date|default:"Не указан" }}
+                                </div>
+                                <div>
+                                    <span class="text-muted">Прогноз:</span>
+                                    {% with prediction=task.predictions.last %}
+                                        {% if prediction %}
+                                            {% if prediction.prediction_time %}
+                                                {{ prediction.prediction_time }} ч.
+                                            {% else %}
+                                                {{ prediction.prediction_text }}
+                                            {% endif %}
+                                        {% else %}
+                                            Недостаточно данных
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'tasks:task_detail' task.id %}" class="btn btn-sm btn-outline-orange">Открыть</a>
+                                <a href="{% url 'tasks:change_task_status' task.id %}"
+                                   class="btn btn-sm btn-outline-light">Статус</a>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="dropzone-empty text-muted small">Перетащите задачу сюда</div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
 {% endblock %}
 
 {% block extra_css %}
-<style>
-    .kanban-dropzone {
-        min-height: 120px;
-        padding: 6px;
-        border-radius: 10px;
-        transition: 0.2s;
-    }
+    <style>
+        .kanban-dropzone {
+            min-height: 120px;
+            padding: 6px;
+            border-radius: 10px;
+            transition: 0.2s;
+        }
 
-    .kanban-dropzone.drag-over {
-        background-color: rgba(255, 140, 66, 0.08);
-        outline: 1px dashed #ff8c42;
-    }
+        .kanban-dropzone.drag-over {
+            background-color: rgba(255, 140, 66, 0.08);
+            outline: 1px dashed #ff8c42;
+        }
 
-    .task-card.dragging {
-        opacity: 0.5;
-    }
+        .task-card.dragging {
+            opacity: 0.5;
+        }
 
-    .dropzone-empty {
-        background-color: #2a2a2a;
-        border: 1px dashed #444;
-        border-radius: 10px;
-        padding: 14px;
-    }
+        .dropzone-empty {
+            background-color: #2a2a2a;
+            border: 1px dashed #444;
+            border-radius: 10px;
+            padding: 14px;
+        }
 
-    .kanban-wrapper {
-        overflow-x: auto;
-        overflow-y: hidden;
-        white-space: nowrap;
-        padding-bottom: 12px;
-        scrollbar-width: thin;
-        scrollbar-color: #ff8c42 #2a2a2a;
-    }
+        .kanban-wrapper {
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            padding-bottom: 12px;
+            scrollbar-width: thin;
+            scrollbar-color: #ff8c42 #2a2a2a;
+        }
 
-    .kanban-wrapper::-webkit-scrollbar {
-        height: 12px;
-    }
+        .kanban-wrapper::-webkit-scrollbar {
+            height: 12px;
+        }
 
-    .kanban-wrapper::-webkit-scrollbar-track {
-        background: #2a2a2a;
-        border-radius: 10px;
-    }
+        .kanban-wrapper::-webkit-scrollbar-track {
+            background: #2a2a2a;
+            border-radius: 10px;
+        }
 
-    .kanban-wrapper::-webkit-scrollbar-thumb {
-        background: #ff8c42;
-        border-radius: 10px;
-        border: 2px solid #2a2a2a;
-    }
+        .kanban-wrapper::-webkit-scrollbar-thumb {
+            background: #ff8c42;
+            border-radius: 10px;
+            border: 2px solid #2a2a2a;
+        }
 
-    .kanban-wrapper::-webkit-scrollbar-thumb:hover {
-        background: #ffa35f;
-    }
+        .kanban-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #ffa35f;
+        }
 
-    .kanban-wrapper::-webkit-scrollbar-corner {
-        background: #2a2a2a;
-    }
-</style>
+        .kanban-wrapper::-webkit-scrollbar-corner {
+            background: #2a2a2a;
+        }
+    </style>
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
                 }
             }
+            return cookieValue;
         }
-        return cookieValue;
-    }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        const cards = document.querySelectorAll('.task-card');
-        const dropzones = document.querySelectorAll('.kanban-dropzone');
-        let draggedCard = null;
+        document.addEventListener('DOMContentLoaded', function () {
+            const cards = document.querySelectorAll('.task-card');
+            const dropzones = document.querySelectorAll('.kanban-dropzone');
+            let draggedCard = null;
 
-        cards.forEach(function(card) {
-            card.addEventListener('dragstart', function() {
-                draggedCard = card;
-                card.classList.add('dragging');
-            });
+            cards.forEach(function (card) {
+                card.addEventListener('dragstart', function () {
+                    draggedCard = card;
+                    card.classList.add('dragging');
+                });
 
-            card.addEventListener('dragend', function() {
-                card.classList.remove('dragging');
-                draggedCard = null;
-            });
-        });
-
-        dropzones.forEach(function(zone) {
-            zone.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                zone.classList.add('drag-over');
-            });
-
-            zone.addEventListener('dragleave', function() {
-                zone.classList.remove('drag-over');
-            });
-
-            zone.addEventListener('drop', function(e) {
-                e.preventDefault();
-                zone.classList.remove('drag-over');
-
-                if (!draggedCard) {
-                    return;
-                }
-
-                const cardElement = draggedCard;
-                const taskId = cardElement.dataset.taskId;
-                const oldStatusName = (cardElement.dataset.currentStatusName || '').toLowerCase().trim();
-                const newStatusId = zone.dataset.statusId;
-                const newStatusName = (zone.dataset.statusName || '').toLowerCase().trim();
-
-                let actualTimeSpent = '';
-
-                if (oldStatusName === 'в работе' && newStatusName !== 'в работе') {
-                    actualTimeSpent = prompt('Введите фактическое время в часах:', '');
-                    if (actualTimeSpent === null) {
-                        return;
-                    }
-                }
-
-                fetch(`/tasks/${taskId}/drag-update-status/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken'),
-                    },
-                    body: JSON.stringify({
-                        status_id: newStatusId,
-                        actual_time_spent: actualTimeSpent
-                    })
-                })
-                .then(async response => {
-                    const data = await response.json();
-                    if (!response.ok) {
-                        throw new Error(data.error || 'Ошибка сервера');
-                    }
-                    return data;
-                })
-                .then(data => {
-                    if (!data.success) {
-                        alert(data.error || 'Не удалось обновить статус');
-                        return;
-                    }
-
-                    const emptyBlock = zone.querySelector('.dropzone-empty');
-                    if (emptyBlock) {
-                        emptyBlock.remove();
-                    }
-
-                    zone.appendChild(cardElement);
-                    cardElement.dataset.currentStatusName = data.new_status;
-
-                    updateEmptyBlocks();
-                })
-                .catch(error => {
-                    console.error('Ошибка drag & drop:', error);
-                    alert(error.message || 'Ошибка при обновлении статуса');
+                card.addEventListener('dragend', function () {
+                    card.classList.remove('dragging');
+                    draggedCard = null;
                 });
             });
-        });
 
-        function updateEmptyBlocks() {
-            document.querySelectorAll('.kanban-dropzone').forEach(function(zone) {
-                const cards = zone.querySelectorAll('.task-card');
-                const empty = zone.querySelector('.dropzone-empty');
+            dropzones.forEach(function (zone) {
+                zone.addEventListener('dragover', function (e) {
+                    e.preventDefault();
+                    zone.classList.add('drag-over');
+                });
 
-                if (cards.length === 0 && !empty) {
-                    const div = document.createElement('div');
-                    div.className = 'dropzone-empty text-muted small';
-                    div.textContent = 'Перетащите задачу сюда';
-                    zone.appendChild(div);
-                }
+                zone.addEventListener('dragleave', function () {
+                    zone.classList.remove('drag-over');
+                });
 
-                if (cards.length > 0 && empty) {
-                    empty.remove();
-                }
+                zone.addEventListener('drop', function (e) {
+                    e.preventDefault();
+                    zone.classList.remove('drag-over');
+
+                    if (!draggedCard) {
+                        return;
+                    }
+
+                    const cardElement = draggedCard;
+                    const taskId = cardElement.dataset.taskId;
+                    const oldStatusName = (cardElement.dataset.currentStatusName || '').toLowerCase().trim();
+                    const newStatusId = zone.dataset.statusId;
+                    const newStatusName = (zone.dataset.statusName || '').toLowerCase().trim();
+
+                    let actualTimeSpent = '';
+
+                    if (oldStatusName === 'в работе' && newStatusName !== 'в работе') {
+                        actualTimeSpent = prompt('Введите фактическое время в часах:', '');
+                        if (actualTimeSpent === null) {
+                            return;
+                        }
+                    }
+
+                    fetch(`/tasks/${taskId}/drag-update-status/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken'),
+                        },
+                        body: JSON.stringify({
+                            status_id: newStatusId,
+                            actual_time_spent: actualTimeSpent
+                        })
+                    })
+                        .then(async response => {
+                            const data = await response.json();
+                            if (!response.ok) {
+                                throw new Error(data.error || 'Ошибка сервера');
+                            }
+                            return data;
+                        })
+                        .then(data => {
+                            if (!data.success) {
+                                alert(data.error || 'Не удалось обновить статус');
+                                return;
+                            }
+
+                            const emptyBlock = zone.querySelector('.dropzone-empty');
+                            if (emptyBlock) {
+                                emptyBlock.remove();
+                            }
+
+                            zone.appendChild(cardElement);
+                            cardElement.dataset.currentStatusName = data.new_status;
+
+                            updateEmptyBlocks();
+                        })
+                        .catch(error => {
+                            console.error('Ошибка drag & drop:', error);
+                            alert(error.message || 'Ошибка при обновлении статуса');
+                        });
+                });
             });
-        }
-    });
-</script>
+
+            function updateEmptyBlocks() {
+                document.querySelectorAll('.kanban-dropzone').forEach(function (zone) {
+                    const cards = zone.querySelectorAll('.task-card');
+                    const empty = zone.querySelector('.dropzone-empty');
+
+                    if (cards.length === 0 && !empty) {
+                        const div = document.createElement('div');
+                        div.className = 'dropzone-empty text-muted small';
+                        div.textContent = 'Перетащите задачу сюда';
+                        zone.appendChild(div);
+                    }
+
+                    if (cards.length > 0 && empty) {
+                        empty.remove();
+                    }
+                });
+            }
+        });
+    </script>
 {% endblock %}

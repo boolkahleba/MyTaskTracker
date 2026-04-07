@@ -74,7 +74,9 @@ def board_detail_view(request, board_id):
     statuses = board.statuses.all()
     tasks_by_status = {}
     for status in statuses:
-        tasks_by_status[status] = board.tasks.filter(status=status).select_related('assignee', 'author', 'status')
+        tasks_by_status[status] = board.tasks.filter(status=status).select_related(
+            'assignee', 'author', 'status'
+        ).prefetch_related('predictions')
 
     return render(request, 'boards/board_detail.html', {
         'board': board,

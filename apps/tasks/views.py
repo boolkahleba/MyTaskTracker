@@ -1,16 +1,15 @@
+import json
 from decimal import Decimal
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
-import json
-from django.http import Http404, JsonResponse
 
 from .forms import TaskForm, TaskUpdateForm, TaskStatusForm, TaskFilterForm, TaskCommentForm
-from .models import Task, Prediction
+from .models import Task
 from boards.models import Board, BoardStatus
 from boards.utils import user_has_board_access, user_can_edit_task
-from predictions.predictors import get_simple_prediction, save_historical_data
+from predictions.predictors import save_historical_data, retrain_model_if_possible, create_or_update_prediction
 
 
 @login_required
@@ -29,14 +28,9 @@ def create_task_view(request, board_id):
             task.board = board
             task.author = request.user
             task.status = first_status
-            task.time_estimate = Decimal('2.00')
             task.save()
 
-            prediction_value = get_simple_prediction(task)
-            Prediction.objects.create(
-                task=task,
-                prediction_time=prediction_value
-            )
+            create_or_update_prediction(task)
 
             return redirect('boards:board_detail', board_id=board.id)
     else:
@@ -85,9 +79,23 @@ def update_task_view(request, task_id):
         raise Http404
 
     if request.method == 'POST':
+        old_title = task.title
+        old_task_type = task.task_type
+        old_assignee_id = task.assignee.id if task.assignee else None
+
         form = TaskUpdateForm(request.POST, instance=task)
         if form.is_valid():
-            form.save()
+            updated_task = form.save()
+
+            new_assignee_id = updated_task.assignee.id if updated_task.assignee else None
+
+            if (
+                old_title != updated_task.title or
+                old_task_type != updated_task.task_type or
+                old_assignee_id != new_assignee_id
+            ):
+                create_or_update_prediction(updated_task)
+
             return redirect('tasks:task_detail', task_id=task.id)
     else:
         form = TaskUpdateForm(instance=task)
@@ -142,6 +150,7 @@ def change_task_status_view(request, task_id):
 
             if new_status.name.lower() in ['готово', 'done', 'completed', 'завершено']:
                 save_historical_data(task)
+                retrain_model_if_possible()
 
             return redirect('tasks:task_detail', task_id=task.id)
     else:
@@ -240,6 +249,7 @@ def drag_update_task_status_view(request, task_id):
 
     if new_status_name in ['готово', 'done', 'completed', 'завершено']:
         save_historical_data(task)
+        retrain_model_if_possible()
 
     return JsonResponse({
         'success': True,

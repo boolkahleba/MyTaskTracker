@@ -2,54 +2,56 @@
 {% block title %}Редактирование задачи{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-xl-8">
-        <div class="section-box">
-            <h2 class="page-title mb-4">Редактирование задачи</h2>
+    <div class="row justify-content-center">
+        <div class="col-xl-8">
+            <div class="section-box">
+                <h2 class="page-title mb-4">Редактирование задачи</h2>
 
-            <form method="post">
-                {% csrf_token %}
+                <form method="post">
+                    {% csrf_token %}
 
-                <div class="mb-3">
-                    <label class="form-label">Название</label>
-                    {{ form.title }}
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Описание</label>
-                    {{ form.description }}
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Тип задачи</label>
-                        {{ form.task_type }}
+                    <div class="mb-3">
+                        <label class="form-label">Название</label>
+                        {{ form.title }}
                     </div>
 
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Приоритет</label>
-                        {{ form.priority }}
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Дедлайн</label>
-                        {{ form.due_date }}
+                    <div class="mb-3">
+                        <label class="form-label">Описание</label>
+                        {{ form.description }}
                     </div>
 
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Исполнитель</label>
-                        {{ form.assignee }}
-                    </div>
-                </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Тип задачи</label>
+                            {{ form.task_type }}
+                        </div>
 
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-outline-orange">Сохранить</button>
-                    <a href="{% url 'tasks:task_detail' task.id %}" class="btn btn-secondary">Назад</a>
-                </div>
-            </form>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Приоритет</label>
+                            {{ form.priority }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Дедлайн</label>
+                            {{ form.due_date }}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Исполнитель</label>
+                            {{ form.assignee }}
+                        </div>
+                    </div>
+                    <div class="alert alert-secondary">
+                        Если изменить название, тип задачи или исполнителя, прогноз будет пересчитан автоматически.
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-outline-orange">Сохранить</button>
+                        <a href="{% url 'tasks:task_detail' task.id %}" class="btn btn-secondary">Назад</a>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</div>
 {% endblock %}
