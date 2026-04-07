@@ -5,10 +5,10 @@ from boards.models import Board, BoardStatus
 
 class Task(models.Model):
     TASK_TYPE_CHOICES = [
-        ('bug', 'Bug'),
-        ('feature', 'Feature'),
-        ('task', 'Task'),
-        ('research', 'Research'),
+        ('bug', 'Ошибка'),
+        ('feature', 'Фича'),
+        ('task', 'Задача'),
+        ('research', 'Ресерч')
     ]
 
     PRIORITY_CHOICES = [
