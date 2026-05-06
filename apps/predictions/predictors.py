@@ -16,26 +16,24 @@ def get_training_dataframe():
     items = HistoricalTaskData.objects.exclude(
         actual_time_spent__isnull=True
     ).values(
-        'task_type',
         'task_title',
+        'task_type',
         'assignee_name',
         'actual_time_spent'
     )
 
     data = list(items)
+
     if not data:
         return pd.DataFrame()
 
     df = pd.DataFrame(data)
-    df = df.rename(columns={
-        'task_title': 'title',
-        'assignee_name': 'assignee',
-    })
 
+    df['task_title'] = df['task_title'].fillna('')
     df['task_type'] = df['task_type'].fillna('')
-    df['title'] = df['title'].fillna('')
-    df['assignee'] = df['assignee'].fillna('')
+    df['assignee_name'] = df['assignee_name'].fillna('')
     df['actual_time_spent'] = pd.to_numeric(df['actual_time_spent'], errors='coerce')
+
     df = df.dropna(subset=['actual_time_spent'])
 
     return df
@@ -45,23 +43,24 @@ def train_model():
     ensure_model_dir()
 
     df = get_training_dataframe()
+
     if len(df) < settings.MIN_TASKS_FOR_TRAINING:
         return False
 
-    X = df[['task_type', 'title', 'assignee']]
+    X = df[['task_title', 'assignee_name', 'task_type']]
     y = df['actual_time_spent']
 
     train_pool = Pool(
         data=X,
         label=y,
-        cat_features=['task_type', 'assignee'],
-        text_features=['title']
+        cat_features=['assignee_name', 'task_type'],
+        text_features=['task_title']
     )
 
     model = CatBoostRegressor(
-        iterations=300,
+        iterations=500,
         depth=6,
-        learning_rate=0.05,
+        learning_rate=0.1,
         loss_function='RMSE',
         verbose=False
     )
@@ -87,6 +86,7 @@ def load_model():
 
 def can_predict():
     df = get_training_dataframe()
+
     if len(df) < settings.MIN_TASKS_FOR_TRAINING:
         return False
 
@@ -104,26 +104,21 @@ def predict_task_time(task):
         }
 
     model = load_model()
-    if model is None:
-        return {
-            'prediction_time': None,
-            'prediction_text': 'Недостаточно данных для прогнозирования'
-        }
 
     assignee_name = ''
     if task.assignee:
         assignee_name = task.assignee.full_name
 
     X = pd.DataFrame([{
-        'task_type': task.task_type or '',
-        'title': task.title or '',
-        'assignee': assignee_name or '',
+        'task_title': task.title,
+        'assignee_name': assignee_name,
+        'task_type': task.task_type,
     }])
 
     pool = Pool(
         data=X,
-        cat_features=['task_type', 'assignee'],
-        text_features=['title']
+        cat_features=['assignee_name', 'task_type'],
+        text_features=['task_title']
     )
 
     prediction = model.predict(pool)[0]
@@ -137,25 +132,6 @@ def predict_task_time(task):
         'prediction_time': prediction_value,
         'prediction_text': None
     }
-
-
-def save_historical_data(task):
-    HistoricalTaskData.objects.get_or_create(
-        task=task,
-        defaults={
-            'task_title': task.title,
-            'task_type': task.task_type,
-            'assignee_name': task.assignee.full_name if task.assignee else '',
-            'actual_time_spent': task.actual_time_spent,
-        }
-    )
-
-def retrain_model_if_possible():
-    df = get_training_dataframe()
-    if len(df) < settings.MIN_TASKS_FOR_TRAINING:
-        return False
-
-    return train_model()
 
 
 def create_or_update_prediction(task):
@@ -177,3 +153,24 @@ def create_or_update_prediction(task):
     task.save(update_fields=['time_estimate'])
 
     return prediction_result
+
+
+def save_historical_data(task):
+    HistoricalTaskData.objects.update_or_create(
+        task=task,
+        defaults={
+            'task_title': task.title,
+            'task_type': task.task_type,
+            'assignee_name': task.assignee.full_name if task.assignee else '',
+            'actual_time_spent': task.actual_time_spent,
+        }
+    )
+
+
+def retrain_model_if_possible():
+    df = get_training_dataframe()
+
+    if len(df) < settings.MIN_TASKS_FOR_TRAINING:
+        return False
+
+    return train_model()
