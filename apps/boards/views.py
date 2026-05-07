@@ -6,6 +6,8 @@ from .forms import BoardForm, BoardUpdateForm
 from .models import Board, BoardStatus, BoardMember, UserGroupRights
 from .utils import get_user_boards, user_has_board_access
 from accounts.models import User, UserGroup
+from django.contrib import messages
+from django.db import transaction
 
 
 @login_required
@@ -99,17 +101,40 @@ def update_board_view(request, board_id):
         if form.is_valid():
             form.save()
 
-            board.statuses.all().delete()
             statuses_text = form.cleaned_data['statuses']
-            statuses = [item.strip() for item in statuses_text.split(',') if item.strip()]
+            new_status_names = [
+                item.strip()
+                for item in statuses_text.split(',')
+                if item.strip()
+            ]
 
-            for index, status_name in enumerate(statuses):
-                BoardStatus.objects.create(
+            existing_statuses = {
+                status.name: status
+                for status in board.statuses.all()
+            }
+
+            for old_name, old_status in existing_statuses.items():
+                if old_name not in new_status_names:
+                    if old_status.tasks.exists():
+                        messages.error(
+                            request,
+                            f'Нельзя удалить колонку "{old_name}", так как в ней есть задачи.'
+                        )
+                        return redirect('boards:update_board', board_id=board.id)
+                    old_status.delete()
+
+            for index, status_name in enumerate(new_status_names):
+                status, created = BoardStatus.objects.get_or_create(
                     board=board,
                     name=status_name,
-                    position=index
+                    defaults={'position': index}
                 )
 
+                if not created:
+                    status.position = index
+                    status.save()
+
+            messages.success(request, 'Доска успешно обновлена.')
             return redirect('boards:board_detail', board_id=board.id)
     else:
         form = BoardUpdateForm(instance=board, initial={'statuses': initial_statuses})
