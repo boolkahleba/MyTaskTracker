@@ -166,8 +166,6 @@
         hr {
             border-color: #454545;
         }
-
-        scrollbar-color: #ff8c42 #2a2a2a;
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -180,6 +178,6 @@
     </main>
 
     {% include 'includes/footer.html' %}
-
+{% block extra_js %}{% endblock %}
 </body>
 </html>

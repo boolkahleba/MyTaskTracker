@@ -234,7 +234,7 @@ def drag_update_task_status_view(request, task_id):
     old_status_name = task.status.name.lower() if task.status else ''
     new_status_name = new_status.name.lower()
 
-    if old_status_name == 'в работе':
+    if old_status_name == 'в работе' and new_status_name != BoardStatus.objects.filter(board=task.board).order_by('position').first():
         if actual_time_spent not in [None, '']:
             try:
                 task.actual_time_spent = Decimal(str(actual_time_spent))
