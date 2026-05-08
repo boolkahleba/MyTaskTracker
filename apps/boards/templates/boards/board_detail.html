@@ -29,7 +29,8 @@
 
                 <div class="kanban-dropzone"
                      data-status-id="{{ status.id }}"
-                     data-status-name="{{ status.name }}">
+                     data-status-name="{{ status.name }}"
+                     data-is-first-status="{% if forloop.first %}true{% else %}false{% endif %}">
                     {% for task in tasks %}
                         <div class="task-card"
                              draggable="true"
@@ -213,7 +214,9 @@
 
                     let actualTimeSpent = '';
 
-                    if (oldStatusName === 'в работе' && newStatusName !== 'в работе') {
+                    const isFirstStatus = zone.dataset.isFirstStatus === 'true';
+
+                    if (oldStatusName === 'в работе' && !isFirstStatus) {
                         actualTimeSpent = prompt('Введите фактическое время в часах:', '');
 
                         if (actualTimeSpent === null) {

@@ -10,6 +10,9 @@ from .models import Task
 from boards.models import Board, BoardStatus
 from boards.utils import user_has_board_access, user_can_edit_task
 from predictions.predictors import save_historical_data, retrain_model_if_possible, create_or_update_prediction
+import threading
+
+model_training_lock = threading.Lock()
 
 
 @login_required
@@ -226,20 +229,25 @@ def drag_update_task_status_view(request, task_id):
     status_id = data.get('status_id')
     actual_time_spent = data.get('actual_time_spent')
 
-    if not status_id:
-        return JsonResponse({'success': False, 'error': 'Не передан статус'}, status=400)
-
     new_status = get_object_or_404(BoardStatus, pk=status_id, board=task.board)
 
     old_status_name = task.status.name.lower() if task.status else ''
     new_status_name = new_status.name.lower()
 
-    if old_status_name == 'в работе' and new_status_name != BoardStatus.objects.filter(board=task.board).order_by('position').first():
-        if actual_time_spent not in [None, '']:
-            try:
-                task.actual_time_spent = Decimal(str(actual_time_spent))
-            except:
-                return JsonResponse({'success': False, 'error': 'Некорректное фактическое время'}, status=400)
+    if old_status_name == 'в работе' and new_status_name != 'в работе' and new_status_name != BoardStatus.objects.filter(board=task.board).order_by('position').first().name.lower():
+        if actual_time_spent in [None, '']:
+            return JsonResponse({
+                'success': False,
+                'error': 'Для завершения задачи нужно указать фактическое время выполнения.'
+            }, status=400)
+
+        try:
+            task.actual_time_spent = Decimal(str(actual_time_spent).replace(',', '.'))
+        except:
+            return JsonResponse({
+                'success': False,
+                'error': 'Фактическое время указано некорректно.'
+            }, status=400)
 
     if new_status_name == 'в работе' and task.started_at is None:
         task.started_at = timezone.now()
@@ -248,11 +256,27 @@ def drag_update_task_status_view(request, task_id):
     task.save()
 
     if new_status_name in ['готово', 'done', 'completed', 'завершено']:
-        save_historical_data(task)
-        retrain_model_if_possible()
+        if task.actual_time_spent is not None:
+            try:
+                save_historical_data(task)
+                thread = threading.Thread(target=retrain_model_background)
+                thread.daemon = True
+                thread.start()
+            except Exception as e:
+                print('Ошибка при обновлении ML-данных:', e)
 
     return JsonResponse({
         'success': True,
         'new_status': new_status.name,
         'task_id': task.id,
     })
+
+def retrain_model_background():
+    if model_training_lock.locked():
+        return
+
+    with model_training_lock:
+        try:
+            retrain_model_if_possible()
+        except Exception as e:
+            print('Ошибка фонового переобучения модели:', e)
