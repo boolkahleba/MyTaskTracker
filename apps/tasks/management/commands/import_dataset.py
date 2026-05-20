@@ -212,7 +212,7 @@ class Command(BaseCommand):
                 assignee=assignee,
                 task_type=str(row['type']).strip(),
                 priority='medium',
-                actual_time_spent=None,
+                actual_time_spent=Decimal(str(row['actual_time_spent']).replace(',', '.')),
                 time_estimate=None,
             )
 

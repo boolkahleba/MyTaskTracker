@@ -23,7 +23,7 @@ def create_task_view(request, board_id):
         raise Http404
 
     if request.method == 'POST':
-        form = TaskForm(request.POST)
+        form = TaskForm(request.POST, board=board)
         if form.is_valid():
             first_status = BoardStatus.objects.filter(board=board).order_by('position').first()
 
@@ -37,7 +37,7 @@ def create_task_view(request, board_id):
 
             return redirect('boards:board_detail', board_id=board.id)
     else:
-        form = TaskForm()
+        form = TaskForm(board=board)
 
     return render(request, 'tasks/create_task.html', {
         'form': form,

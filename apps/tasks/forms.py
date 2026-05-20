@@ -1,8 +1,28 @@
 from django import forms
+from django.db.models import Q
 from .models import Task, TaskComment
-from boards.models import BoardStatus
-from accounts.models import User
+from boards.models import BoardStatus, BoardMember, UserGroupRights
+from accounts.models import User, UserInGroup
 
+def get_board_available_users(board):
+    group_ids = UserGroupRights.objects.filter(
+        board=board
+    ).values_list('group_id', flat=True)
+
+    group_user_ids = UserInGroup.objects.filter(
+        group_id__in=group_ids
+    ).values_list('user_id', flat=True)
+
+    direct_user_ids = BoardMember.objects.filter(
+        board=board
+    ).values_list('user_id', flat=True)
+
+    return User.objects.filter(
+        Q(id=board.created_by_id) |
+        Q(id__in=direct_user_ids) |
+        Q(id__in=group_user_ids) |
+        Q(is_staff=True)
+    ).distinct().order_by('full_name')
 
 class TaskForm(forms.ModelForm):
     class Meta:
@@ -33,6 +53,15 @@ class TaskForm(forms.ModelForm):
             }),
             'assignee': forms.Select(attrs={'class': 'form-select'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        board = kwargs.pop('board', None)
+        super().__init__(*args, **kwargs)
+
+        if board:
+            self.fields['assignee'].queryset = get_board_available_users(board)
+        else:
+            self.fields['assignee'].queryset = User.objects.none()
 
 
 class TaskUpdateForm(TaskForm):
